@@ -285,7 +285,10 @@ router.delete('/users/:id', async (req, res) => {
     
     await prisma.user.delete({ where: { id: req.params.id } });
     res.json({ success: true, message: 'User berhasil dihapus' });
-  } catch (e) { res.status(500).json({ success: false, error: 'User tidak ditemukan' }); }
+  } catch (e) { 
+    console.error("Delete User Error:", e);
+    res.status(500).json({ success: false, error: 'Gagal menghapus user. Kemungkinan user masih terkait dengan data lain.' }); 
+  }
 });
 
 // ── GET /api/admin/diaries ─────────────────────────────────────────────────────
@@ -549,6 +552,28 @@ router.delete('/diaries/:id', async (req, res) => {
     
     res.json({ success: true, message: 'Diary berhasil dihapus' });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ── DELETE /api/admin/projects/:id ───────────────────────────────────────────
+router.delete('/projects/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const project = await prisma.project.findUnique({ where: { id } });
+    if (!project) return res.status(404).json({ success: false, error: 'Proyek tidak ditemukan' });
+
+    // Delete the project. Prisma with onDelete: Cascade will handle:
+    // - ProjectMember
+    // - ProjectDiary
+    // - WeeklyReport
+    // - ProjectRoadmap (and its milestones/logs)
+    await prisma.project.delete({ where: { id } });
+
+    await logActivity(req.user.id, req.user.username, 'DELETE_PROJECT_ADMIN', id, project.project_name, project.project_status);
+
+    res.json({ success: true, message: 'Proyek berhasil dihapus' });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 // ── GET /api/admin/projects ──────────────────────────────────────────────────

@@ -1361,22 +1361,44 @@ function closeDeleteModal() {
   _deleteId = null;
 }
 async function executeDelete() {
+  const targetId = _deleteId;
+  const targetType = _deleteType;
   closeDeleteModal();
-  const url =
-    _deleteType === "user"
-      ? `/api/admin/users/${_deleteId}`
-      : _deleteType === "diary"
-      ? `/api/admin/diaries/${_deleteId}`
-      : _deleteType === "project"
-      ? `/api/admin/projects/${_deleteId}`
-      : `/api/admin/tasks/${_deleteId}`;
-  const res = await adminFetch(url, { method: "DELETE" });
-  if (!res) return;
-  const data = await res.json();
-  if (data.success) {
-    showToast(data.message, "success");
-    await loadAll();
-  } else showToast(data.error || "Gagal menghapus", "error");
+  
+  let url = "";
+  if (targetType === "user") url = `/api/admin/users/${targetId}`;
+  else if (targetType === "diary") url = `/api/admin/diaries/${targetId}`;
+  else if (targetType === "project") url = `/api/admin/projects/${targetId}`;
+  else if (targetType === "milestone") {
+    const pId = window.currentRoadmapProject;
+    url = `/api/projects/${pId}/roadmap/milestones/${targetId}`;
+  } 
+  else if (targetType === "schedule") url = `/api/community/schedules/${targetId}`;
+  else if (targetType === "category") url = `/api/community/categories/${targetId}`;
+  else if (targetType === "house-rules") url = `/api/community/house-rules/${targetId}`;
+  else if (targetType === "duty") url = `/api/community/duty-schedules/${targetId}`;
+  else if (targetType === "combined-report") url = `/api/admin/combined-reports/${targetId}`;
+  else url = `/api/admin/tasks/${targetId}`;
+
+  try {
+    const res = await adminFetch(url, { method: "DELETE" });
+    if (!res) return;
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || "Data berhasil dihapus", "success");
+      // Give a small delay for DB to sync if needed, then reload
+      setTimeout(async () => {
+        await loadAll();
+        // If it was a user delete, extra refresh for stats
+        if (targetType === "user") await loadStats(true);
+      }, 300);
+    } else {
+      showToast(data.error || "Gagal menghapus", "error");
+    }
+  } catch (err) {
+    console.error("Delete error:", err);
+    showToast("Terjadi kesalahan saat menghapus data.", "error");
+  }
 }
 
 // ── First Admin Setup (no auth needed) ───────────────────────────────────────
@@ -1665,12 +1687,6 @@ function renderDutySchedules() {
             <span class="duty-day-count">${members.length} anggota</span>
           </div>
           <div class="duty-members" id="dm-list-${day}">${membersHTML}</div>
-          <div class="duty-add-row">
-            <input type="text" class="duty-add-input" id="dutyInline-${day}"
-              placeholder="+ Nama anggota..." maxlength="80"
-              onkeydown="if(event.key==='Enter') quickAddDuty('${day}')"/>
-            <button class="duty-add-btn" onclick="quickAddDuty('${day}')" title="Tambah"><i class="bi bi-plus-lg"></i></button>
-          </div>
         </div>`;
     }).join("");
 
@@ -1688,39 +1704,39 @@ function renderDutySchedules() {
     renderSection("Piket Genap", ["Jumat Genap", "Sabtu Genap"]);
 }
 
-// Quick inline add
-async function quickAddDuty(day) {
-  const input = getEl(`dutyInline-${day}`);
-  if (!input) return;
-  const name = input.value.trim();
-  if (!name) {
-    input.focus();
+// Duty Modal (for modal-based add) ────────────────────────
+function populateDutyUsers(selectedValue = "") {
+  const select = getEl("dutyMember");
+  if (!select) return;
+  select.innerHTML = '<option value="">— Pilih Anggota —</option>';
+  
+  // Use allUsers if already loaded, otherwise we might need to fetch
+  if (allUsers.length === 0) {
+    // If not loaded, we try to load them once
+    adminFetch("/api/admin/users?filter=all").then(res => res && res.json()).then(json => {
+       if (json && json.success) {
+         allUsers = json.data;
+         populateDutyUsers(selectedValue);
+       }
+    });
     return;
   }
-  input.disabled = true;
-  const res = await adminFetch("/api/community/duty-schedules", {
-    method: "POST",
-    body: JSON.stringify({ day, member_name: name }),
+
+  const sorted = [...allUsers].sort((a, b) => a.username.localeCompare(b.username));
+  sorted.forEach(u => {
+    const opt = document.createElement("option");
+    opt.value = u.username;
+    opt.textContent = u.username;
+    if (u.username === selectedValue) opt.selected = true;
+    select.appendChild(opt);
   });
-  input.disabled = false;
-  if (!res) return;
-  const data = await res.json();
-  if (data.success) {
-    input.value = "";
-    showToast(`${name} ditambahkan ke ${day}`, "success");
-    await loadDutySchedules();
-  } else {
-    showToast(data.error || "Gagal menambahkan", "error");
-    input.focus();
-  }
 }
 
-// ── Duty Modal (for modal-based add) ────────────────────────
 function openDutyModal() {
   editingDutyId = null;
   setText("dutyModalTitle", "Tambah Jadwal Piket");
   setValue("dutyDay", "");
-  setValue("dutyMember", "");
+  populateDutyUsers("");
   const dutyDay = getEl("dutyDay");
   if (dutyDay) dutyDay.disabled = false;
   setText("dutyDayErr", "");
@@ -1735,7 +1751,7 @@ function openDutyEditModal(id, day, name) {
   setValue("dutyDay", day);
   const dutyDay = getEl("dutyDay");
   if (dutyDay) dutyDay.disabled = false;
-  setValue("dutyMember", name);
+  populateDutyUsers(name);
   setText("dutyDayErr", "");
   setText("dutyMemberErr", "");
   setValue("editingDutyId", id);

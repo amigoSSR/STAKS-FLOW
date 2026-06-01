@@ -12,6 +12,7 @@
     "prod:logs": "pm2 logs staks-flow",
     "prod:status": "pm2 status",
     "db:push": "npx prisma db push",
+    "seed": "node prisma/seed.js",
     "db:migrate": "npx prisma migrate deploy",
     "db:studio": "npx prisma studio",
     "db:generate": "npx prisma generate"

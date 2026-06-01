@@ -141,3 +141,99 @@
     </div>
   </div>
 </div>
+
+<!-- PROJECT ROADMAP MODAL -->
+<div class="a-modal-overlay" id="projectRoadmapModalOverlay">
+  <div class="a-modal" style="max-width: 1000px; width: 95%;">
+    <div class="a-modal-header">
+      <h3 id="projectRoadmapTitle">Roadmap Proyek</h3>
+      <button onclick="closeProjectRoadmapModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div id="roadmapContainer"></div>
+  </div>
+</div>
+
+<!-- CREATE ROADMAP MODAL -->
+<div class="a-modal-overlay" id="createRoadmapModalOverlay">
+  <div class="a-modal" style="max-width: 500px; width: 90%;">
+    <div class="a-modal-header">
+      <h3>Inisialisasi Roadmap</h3>
+      <button onclick="closeCreateRoadmapModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <form onsubmit="initRoadmap(event)">
+      <input type="hidden" id="crProjectId">
+      <div class="a-form-group">
+        <label class="a-form-label">Judul Roadmap</label>
+        <input type="text" id="crTitle" required class="a-form-input">
+      </div>
+      <div class="a-form-group">
+        <label class="a-form-label">Deskripsi</label>
+        <textarea id="crDesc" class="a-form-input" rows="3"></textarea>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="a-form-group">
+          <label class="a-form-label">Tanggal Mulai</label>
+          <input type="date" id="crStart" required class="a-form-input">
+        </div>
+        <div class="a-form-group">
+          <label class="a-form-label">Target Selesai</label>
+          <input type="date" id="crTarget" required class="a-form-input">
+        </div>
+      </div>
+      <div class="a-modal-actions">
+        <button type="button" class="a-btn-cancel" onclick="closeCreateRoadmapModal()">Batal</button>
+        <button type="submit" class="a-btn-primary">Simpan Roadmap</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MILESTONE MODAL -->
+<div class="a-modal-overlay" id="milestoneModalOverlay">
+  <div class="a-modal" style="max-width: 600px; width: 90%;">
+    <div class="a-modal-header">
+      <h3 id="milestoneModalTitle">Milestone</h3>
+      <button onclick="closeMilestoneModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <form id="milestoneForm" onsubmit="saveMilestone(event)">
+      <input type="hidden" id="milestoneFormId">
+      <input type="hidden" id="milestoneProjectId">
+      <div class="a-form-group">
+        <label class="a-form-label">Judul Milestone</label>
+        <input type="text" id="milestoneFormTitle" required class="a-form-input">
+      </div>
+      <div class="a-form-group">
+        <label class="a-form-label">Deskripsi</label>
+        <textarea id="milestoneFormDesc" class="a-form-input" rows="3"></textarea>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="a-form-group">
+          <label class="a-form-label">Tanggal Mulai</label>
+          <input type="date" id="milestoneFormStart" required class="a-form-input">
+        </div>
+        <div class="a-form-group">
+          <label class="a-form-label">Deadline</label>
+          <input type="date" id="milestoneFormTarget" required class="a-form-input">
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="a-form-group">
+          <label class="a-form-label">Progress (%)</label>
+          <input type="number" id="milestoneFormProgress" min="0" max="100" class="a-form-input">
+        </div>
+        <div class="a-form-group">
+          <label class="a-form-label">Status</label>
+          <select id="milestoneFormStatus" class="a-form-input">
+            <option value="pending">Pending</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
+      <div class="a-modal-actions">
+        <button type="button" class="a-btn-cancel" onclick="closeMilestoneModal()">Batal</button>
+        <button type="submit" class="a-btn-primary">Simpan Milestone</button>
+      </div>
+    </form>
+  </div>
+</div>

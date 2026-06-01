@@ -228,7 +228,7 @@ model ManualBook {
   updated_at  DateTime       @updatedAt
 
   category    ManualCategory @relation(fields: [category_id], references: [id], onDelete: Cascade)
-  creator     User           @relation(fields: [created_by], references: [id])
+  creator     User           @relation(fields: [created_by], references: [id], onDelete: Cascade)
 
   @@map("manual_books")
 }
