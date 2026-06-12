@@ -285,10 +285,7 @@ router.delete('/users/:id', async (req, res) => {
     
     await prisma.user.delete({ where: { id: req.params.id } });
     res.json({ success: true, message: 'User berhasil dihapus' });
-  } catch (e) { 
-    console.error("Delete User Error:", e);
-    res.status(500).json({ success: false, error: 'Gagal menghapus user. Kemungkinan user masih terkait dengan data lain.' }); 
-  }
+  } catch (e) { res.status(500).json({ success: false, error: 'User tidak ditemukan' }); }
 });
 
 // ── GET /api/admin/diaries ─────────────────────────────────────────────────────
@@ -554,28 +551,6 @@ router.delete('/diaries/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// ── DELETE /api/admin/projects/:id ───────────────────────────────────────────
-router.delete('/projects/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const project = await prisma.project.findUnique({ where: { id } });
-    if (!project) return res.status(404).json({ success: false, error: 'Proyek tidak ditemukan' });
-
-    // Delete the project. Prisma with onDelete: Cascade will handle:
-    // - ProjectMember
-    // - ProjectDiary
-    // - WeeklyReport
-    // - ProjectRoadmap (and its milestones/logs)
-    await prisma.project.delete({ where: { id } });
-
-    await logActivity(req.user.id, req.user.username, 'DELETE_PROJECT_ADMIN', id, project.project_name, project.project_status);
-
-    res.json({ success: true, message: 'Proyek berhasil dihapus' });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
 // ── GET /api/admin/projects ──────────────────────────────────────────────────
 router.get('/projects', async (req, res) => {
   try {
@@ -780,70 +755,18 @@ router.post('/projects/:id/complete', async (req, res) => {
     res.status(500).json({ success: false, error: e.message });
   }
 });
-
-// ── GET /api/admin/projects/roadmaps ────────────────────────────────────────
-router.get('/projects/roadmaps', async (req, res) => {
+  
+// ── DELETE /api/admin/projects/:id ───────────────────────────────────────────
+router.delete('/projects/:id', async (req, res) => {
   try {
-    const roadmaps = await prisma.projectRoadmap.findMany({
-      include: {
-        project: {
-          select: {
-            project_name: true,
-            project_status: true,
-            members: {
-              where: { role: 'leader' },
-              include: { user: { select: { username: true } } }
-            }
-          }
-        },
-        milestones: true
-      },
-      orderBy: { deadline: 'asc' }
-    });
+    const { id } = req.params;
+    const existing = await prisma.project.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ success: false, error: 'Proyek tidak ditemukan' });
 
-    const data = roadmaps.map(r => {
-      const leader = r.project?.members[0]?.user?.username || 'No Leader';
-      const isDelayed = new Date(r.deadline) < new Date() && r.status !== 'completed';
-      
-      return {
-        ...r,
-        project_name: r.project?.project_name,
-        leader,
-        is_delayed: isDelayed
-      };
-    });
+    await prisma.project.delete({ where: { id } });
+    await logActivity(req.user.id, req.user.username, 'DELETE_PROJECT_ADMIN', id, existing.project_name, 'deleted');
 
-    res.json({ success: true, data });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
-// ── GET /api/admin/roadmaps/logs ─────────────────────────────────────────────
-router.get('/roadmaps/logs', async (req, res) => {
-  try {
-    const logs = await prisma.roadmapProgressLog.findMany({
-      take: 15,
-      orderBy: { timestamp: 'desc' },
-      include: {
-        user: { select: { username: true } },
-        roadmap: { select: { roadmap_title: true, project: { select: { project_name: true } } } },
-        milestone: { select: { title: true } }
-      }
-    });
-
-    const data = logs.map(l => ({
-      id: l.id,
-      timestamp: l.timestamp,
-      action: l.action,
-      details: l.details,
-      username: l.user?.username || 'System',
-      project_name: l.roadmap?.project?.project_name || 'Project',
-      roadmap_title: l.roadmap?.roadmap_title,
-      milestone_title: l.milestone?.title
-    }));
-
-    res.json({ success: true, data });
+    res.json({ success: true, message: 'Proyek berhasil dihapus' });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
@@ -854,23 +777,20 @@ router.post('/promote-first', async (req, res) => {
   try {
     const existingAdmin = await prisma.user.findFirst({ where: { role: 'admin' } });
     if (existingAdmin) return res.status(400).json({ success: false, error: 'Admin sudah ada. Gunakan panel admin.' });
-
+    
     const { username } = req.body;
-    const userToPromote = await prisma.user.findFirst({ 
-      where: { 
-        username: { in: [username.trim(), username.trim().toLowerCase()] } 
-      } 
-    });
+    const userToPromote = await prisma.user.findUnique({ where: { username } });
     if (!userToPromote) return res.status(404).json({ success: false, error: 'User tidak ditemukan' });
 
     await prisma.user.update({
-      where: { id: userToPromote.id },
+      where: { username },
       data: { role: 'admin' }
     });
-
+    
     res.json({ success: true, message: `${username} telah dipromosikan menjadi admin. Silakan login ulang.` });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
+
 // ── GET /weekly-checkup/:id/preview (Unified stable endpoint) ──────────────
 router.get('/weekly-checkup/:id/preview', async (req, res) => {
   try {

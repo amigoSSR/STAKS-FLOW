@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const userData = [
   { name: 'Ibat I', email: 'sholihulibat_26@kharisma.ac.id', password: '123456' },
   { name: 'Ariel', email: 'arielchristian_26@kharisma.ac.id', password: 'Kharisma#25' },
-  { name: 'Rayyan', email: 'muhammadrayyan_24@kharisma.ac.id', password: '321' },
+  { name: 'Rayyan', email: 'muhammadrayyan_24@kharisma.ac.id', password: '123456', role: 'admin' },
   { name: 'Muflihat', email: 'nurmuflihat_24@kharisma.ac.id', password: 'enemypro' },
   { name: 'Andrew', email: 'andrewimanuel_25@kharisma.ac.id', password: 'Epic25Game!' },
   { name: 'Fabio', email: 'fabiojavier_24@kharisma.ac.id', password: 'fabiokharisma02' },

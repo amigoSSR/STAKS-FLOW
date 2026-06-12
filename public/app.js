@@ -1018,6 +1018,8 @@ function openModal(diary = null) {
   
   const progressVal = diary ? diary.work_progress : 0;
   setValue('taskProgress', progressVal);
+  const progEl = getEl('taskProgress');
+  if (progEl) progEl.style.backgroundSize = progressVal + '% 100%';
   const progOut = getEl('progressOutput');
   if (progOut) progOut.textContent = progressVal + '%';
 
