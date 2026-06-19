@@ -69,25 +69,10 @@ app.use(cors({
 }));
 
 // ── Rate Limiting ─────────────────────────────────────────────────────────────
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: 'Terlalu banyak request. Coba lagi nanti.' },
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: 'Terlalu banyak percobaan login. Coba lagi dalam 15 menit.' },
-});
-
-app.use('/api', generalLimiter);
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+// Rate limiting dihapus sesuai permintaan
+// app.use('/api', generalLimiter);
+// app.use('/api/auth/login', authLimiter);
+// app.use('/api/auth/register', authLimiter);
 
 // ── HTTP Logging ──────────────────────────────────────────────────────────────
 app.use(morgan(isProd ? 'combined' : 'dev'));

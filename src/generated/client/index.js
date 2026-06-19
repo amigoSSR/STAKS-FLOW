@@ -308,7 +308,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\New folder\\STAKS-FLOW\\src\\generated\\client",
+      "value": "D:\\New folder\\project\\STAKS-FLOW\\src\\generated\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -322,7 +322,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\New folder\\STAKS-FLOW\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\New folder\\project\\STAKS-FLOW\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
